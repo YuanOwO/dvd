@@ -10,3 +10,8 @@ html, body {
     color: red;
     font-size: 10vh;
 }
+#copyright {
+    position: absolute;
+    color: white;
+    right: 10px; bottom: 10px;
+}

@@ -1,52 +1,50 @@
-$(function() {
-        // 邊界
-    const max = [$('body').width() - $('#box').width(), $('body').height() - $('#box').height()],
-        // 顏色
-        colors = [
-                [255,   0,   0],
-                [255, 165,   0],
-                [255, 255,   0],
-                [  0, 255,   0],
-                [  0, 255, 255],
-                [  0,   0, 255],
-                [ 43,   0, 255],
-                [ 87,   0, 255]
-            ];
-    let i = 1, // 顏色 index
-        rotation, vector; // 移動方向 (-180~180°), 移動向量
-    function setRotationVector() {
-        rotation = rotation > 180 ? rotation - 360 : rotation;
-        let r = rotation / 180 * Math.PI;
-        vector = [Math.cos(r), -Math.sin(r)].map(x => Math.round(x * 100) / 100);
-    }
-    function changeColor() {
-        $('#box').css('color', `rgb(${colors[i].join()})`);
-        i = i == colors.length - 1 ? 0 : i + 1;
-    }
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    // 初始化
-    $('#box').css('left', Math.random() * max[0] + 'px')
-    $('#box').css('top',  Math.random() * max[1] + 'px')
-    rotation = Math.random() * 360;
-    setRotationVector()
-    // 運作開始
-    setInterval(function() {
-        let now = ['left', 'top'].map(x => Number($('#box').css(x).replace('px',''))),
-            next = [now[0] + vector[0], now[1] + vector[1]];
+var colors = [
+        [255,   0,   0],
+        [255, 165,   0],
+        [255, 255,   0],
+        [  0, 255,   0],
+        [  0, 255, 255],
+        [  0,   0, 255],
+        [ 43,   0, 255],
+        [ 87,   0, 255]
+    ];
 
-        if (next[0] < 0 || next[0] > max[0]) {
-            rotation = rotation > 0 ? 180 - rotation : -180 - rotation;
-            setRotationVector();
-            next[0] = now[0] + vector[0];
-            changeColor();
+var Runner = new class {
+    constructor() {
+        this.setBorder();
+        this.setDirection(parseInt(Math.random() * 360));
+        this.now = [0, 1].map(i => Math.random() * this.border[i]);
+        $('#box').css('left', this.now[0] + 'px').css('bottom', this.now[1] + 'px');
+        setInterval(() => {this.move()}, 5);
+    }
+
+    setBorder() {
+        this.border = ['width', 'height'].map(w => $('body')[w]() - $('#box')[w]());
+        // 超出邊界則將座標設為在邊界上
+        [0, 1].forEach(i => {if (this.now && this.now[i] > this.border[i]) {this.now[i] = this.border[i];}});
+    }
+    // 設定方向並變更顏色
+    setDirection(r) {
+        this.rotation = r > 180 ? r - 360 : r;
+        this.vector = ['cos', 'sin'].map(f => Math.round(Math[f](r / 180 * Math.PI) * 1000) / 1000);
+        this.changeColor();
+    }
+    changeColor() {
+        let i = this.colorIndex ? this.colorIndex : parseInt(Math.random() * colors.length);
+        $('#box').css('color', `rgb(${colors[i++].join()})`);
+        this.colorIndex = i < colors.length ? i : 0;
+    }
+    move() {
+        [0, 1].forEach(i => {this.now[i] += this.vector[i]});
+        for (let i = 0; i < 2; i++) {
+            if (this.now[i] < 0 || this.now[i] > this.border[i]) {
+                this.now[i] -= this.vector[i];
+                this.setDirection((i ? 0 : Math.sign(this.rotation) * 180) - this.rotation);
+                this.now[i] += this.vector[i];
+            }
         }
-        if (next[1] < 0 || next[1] > max[1]) {
-            rotation = -rotation;
-            setRotationVector();
-            next[1] = now[1] + vector[1];
-            changeColor();
-        }
-        $('#box').css('left', next[0] + 'px');
-        $('#box').css('top',  next[1] + 'px');
-    }, 5)
-})
+        $('#box').css('left', this.now[0] + 'px').css('bottom', this.now[1] + 'px');
+    }
+}
+
+$().ready(() => {Runner;}).resize(() => {Runner.setBorder();});
